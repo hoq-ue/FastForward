@@ -2880,3 +2880,177 @@ ensureDomLoaded(() => {
     }, 100)
     setTimeout(() => clearInterval(dT), 10000)//
 }, true)
+
+// Ad Block bypass
+const adBlockBypass = (targetSelectors, callback, options) => {
+  const defaultOptions = {
+    timeout: 5000,
+    interval: 100,
+    maxRetries: 50
+  };
+
+  const mergedOptions = { ...defaultOptions, ...options };
+  let retries = 0;
+
+  const checkTargetElements = () => {
+    const targetElements = document.querySelectorAll(targetSelectors);
+
+    if (targetElements.length > 0) {
+      callback();
+    } else {
+      retries++;
+
+      if (retries < mergedOptions.maxRetries) {
+        setTimeout(checkTargetElements, mergedOptions.interval);
+      }
+    }
+  };
+
+  setTimeout(checkTargetElements, mergedOptions.timeout);
+};
+
+// Example usage
+adBlockBypass('.ad-container', () => {
+  console.log('Ad Block bypassed!');
+});
+
+// Combined code with previously added features
+domainBypass("example.com", () => {
+  // Triggered on example.com and subdomains (e.g. www.example.com)
+  ensureDomLoaded(() => {
+    // Triggered as soon as the DOM is ready
+  });
+  // You can use ifElement to check if an element is available via document.querySelector:
+  ifElement(
+    "a#skip_button[href]",
+    (a) => {
+      safelyNavigate(a.href);
+      // safelyNavigate asserts that given URL is valid before navigating and returns false if not
+    },
+    () => {
+      // Optional function to be called if the given element is not available
+    }
+  );
+  // You can also use awaitElement to wait until an element is available via a query selector:
+  awaitElement("a#skip_button[href]", (a) => {
+    safelyAssign(a.href);
+    // safelyAssign is the same as safelyNavigate but skips the
+    // "You're almost at your destination" page, should the user have it enabled
+  });
+});
+
+domainBypass(/example\.(com|org)/, () => {
+  // Triggered if the regex matches any part of the hostname
+});
+
+hrefBypass(/example\.(com|org)/, () => {
+  // Triggered if the regex matches any part of the URL
+});
+
+// Ad Block bypass
+adBlockBypass('.ad-container', () => {
+  console.log('Ad Block bypassed!');
+});
+chrome.webRequest.onBeforeRequest.addListener(
+  function(details) {
+    // Modify the URL
+    const newUrl = details.url.replace('example.com', 'newexample.com');
+    return {redirectUrl: newUrl};
+  },
+  {urls: ['*://example.com/*']},
+  ['blocking']
+);
+
+chrome.proxy.settings.set(
+  {
+    value: {
+      mode: 'fixed_servers',
+      rules: { singleProxy: { scheme: 'http', host: 'myproxyserver.com', port: 8080 } },
+    },
+    scope: 'regular',
+  },
+  function() {}
+);
+
+chrome.devtools.network.onRequestFinished.addListener(function(request) {
+  const url = request.request.url;
+  const status = request.response.status;
+  const responseHeaders = request.response.headers;
+  console.log(url, status, responseHeaders);
+});
+
+chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
+  if (message.action === 'websocket') {
+    chrome.tabs.executeScript(sender.tab.id, {
+      code: `
+        const socket = new WebSocket('${message.url}');
+        socket.addEventListener('message', function(event) {
+          const data = JSON.parse(event.data);
+          console.log(data);
+        });
+      `,
+    });
+  }
+});
+
+chrome.runtime.onInstalled.addListener(function(details) {
+  if (details.reason === 'install') {
+    chrome.storage.local.set({ bypassEnabled: true });
+  }
+});
+
+chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
+  if (request.type === 'bypassStatus') {
+    chrome.storage.local.get(['bypassEnabled'], function(result) {
+      sendResponse({ enabled: result.bypassEnabled });
+    });
+    return true;
+  } else if (request.type === 'toggleBypass') {
+    chrome.storage.local.get(['bypassEnabled'], function(result) {
+      const enabled = !result.bypassEnabled;
+      chrome.storage.local.set({ bypassEnabled: enabled }, function() {
+        sendResponse({ enabled: enabled });
+      });
+    });
+    return true;
+  }
+});
+
+function updateBypassStatus() {
+  chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
+    chrome.tabs.sendMessage(tabs[0].id, { type: 'bypassStatus' }, function(response) {
+      const bypassToggle = document.getElementById('bypass-toggle');
+      if (response.enabled) {
+        bypassToggle.innerText = 'Disable Bypass';
+        bypassToggle.classList.add('enabled');
+      } else {
+        bypassToggle.innerText = 'Enable Bypass';
+        bypassToggle.classList.remove('enabled');
+      }
+    });
+  });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  updateBypassStatus();
+  const bypassToggle = document.getElementById('
+hrefBypass(/example\.(com|org)/, () => {
+    // Triggered if the regex matches any part of the URL
+})
+
+// This is the adBlockBypass function
+function adBlockBypass(callback) {
+    const originalSetTimeout = window.setTimeout;
+    window.setTimeout = function (func, delay) {
+        const args = Array.prototype.slice.call(arguments, 2);
+        const newFunc = function () {
+            func.apply(this, args);
+        }
+        if (delay === 0) {
+            callback();
+            return;
+        }
+        return originalSetTimeout(newFunc, delay);
+    }
+}
+
